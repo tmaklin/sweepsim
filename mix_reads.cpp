@@ -8,26 +8,8 @@
 #include <set>
 #include <iterator>
 
-void DrawReadIds(const std::vector<long unsigned> &how_many, std::vector<long unsigned> read_counts, std::vector<std::vector<long unsigned> > *random_integers) {
-  // Draw random ints and return them in reverse order
-  for (size_t i = 0; i < read_counts.size(); ++i) {
-    std::random_device rd;
-    std::mt19937 rng(rd());
-    std::uniform_int_distribution<int> uni(1, read_counts[i]);
-    //    std::set<long int> validate;
-
-    std::vector<long unsigned> &random = (*random_integers)[i];
-    for (unsigned j = 0; j < how_many[i]; ++j) {
-      long unsigned nextline = (uni(rng) - 1)*4 + 1;
-      //      while (validate.find(nextline) != validate.end()) {
-      //	nextline = (uni(rng) - 1)*4 + 1;
-      //      }
-      //      validate.insert(nextline);
-      random.push_back(nextline);
-    }
-    std::sort(random.rbegin(), random.rend());
-  }
-}
+std::random_device RD;
+std::mt19937 RNG(RD());
 
 void SampleReads(std::ifstream &strand, const long unsigned &proportion, std::ofstream &outfile, std::vector<long unsigned> read_ids) {
   // Sample reads from a sequence and write to out
@@ -41,11 +23,9 @@ void SampleReads(std::ifstream &strand, const long unsigned &proportion, std::of
       ++reads_found;
       read_ids.pop_back();
       std::string read = line;
-      //      outfile << line << std::endl;
       for (unsigned j = 0; j < 3; ++j) {
 	getline(strand, line);
 	line_nr++;
-	//	outfile << line << std::endl;
 	read += '\n';
 	read +=line;
       }
@@ -55,6 +35,19 @@ void SampleReads(std::ifstream &strand, const long unsigned &proportion, std::of
 	read_ids.pop_back();
       }
     }
+  }
+}
+
+void DrawReadIds(const std::vector<long unsigned> &how_many, std::vector<long unsigned> read_counts, std::vector<std::vector<long unsigned> > *random_integers) {
+  // Draw random ints and return them in reverse order
+  for (size_t i = 0; i < read_counts.size(); ++i) {
+    std::uniform_int_distribution<int> uni(1, read_counts[i]);
+    std::vector<long unsigned> &random = (*random_integers)[i];
+    for (unsigned j = 0; j < how_many[i]; ++j) {
+      long unsigned nextline = (uni(RNG) - 1)*4 + 1;
+      random.push_back(nextline);
+    }
+    std::sort(random.rbegin(), random.rend());
   }
 }
 
@@ -73,7 +66,6 @@ void MixReads2(std::ifstream infiles[][2], const std::vector<double> &props, con
   std::vector<std::vector<long unsigned> > read_ids(props.size());
   DrawReadIds(proportions, read_counts, &read_ids);
 
-
   // Process the strands
   for (size_t i = 0; i < props.size(); ++i) {
     if (proportions[i] > 0) {
@@ -88,20 +80,12 @@ void MixReads2(std::ifstream infiles[][2], const std::vector<double> &props, con
     }
   }
 }
-void DrawRandomProportions(const int &how_many, std::vector<double> *random_reals) {
-  // Draw random proportions
-  std::random_device rd;
-  std::mt19937 rng(rd());
-  std::uniform_real_distribution<double> uni(0, 1);
-  double total = 0.0;
-  for (int i = 0; i < how_many; ++i) {
-    double real = uni(rng);
-    total += real;
-    random_reals->push_back(real);
-  }
-  for (int i = 0; i < how_many; ++i) {
-    (*random_reals)[i] /= total;
-  }
+
+long unsigned CountLines(const std::string &infile) {
+  std::ifstream fromfile(infile);
+  long unsigned lines_count = std::count(std::istreambuf_iterator<char>(fromfile), std::istreambuf_iterator<char>(), '\n');
+  lines_count /= 4;
+  return(lines_count);
 }
 
 void WriteMetadata(const std::vector<double> &proportions, std::string &filename, char* argv[]) {
@@ -114,11 +98,18 @@ void WriteMetadata(const std::vector<double> &proportions, std::string &filename
   meta.close();
 }
 
-long unsigned CountLines(const std::string &infile) {
-  std::ifstream fromfile(infile);
-  long unsigned lines_count = std::count(std::istreambuf_iterator<char>(fromfile), std::istreambuf_iterator<char>(), '\n');
-  lines_count /= 4;
-  return(lines_count);
+void DrawRandomProportions(const int &how_many, std::vector<double> *random_reals) {
+  // Draw random proportions
+  std::uniform_real_distribution<double> uni(0, 1);
+  double total = 0.0;
+  for (int i = 0; i < how_many; ++i) {
+    double real = uni(RNG);
+    total += real;
+    random_reals->push_back(real);
+  }
+  for (int i = 0; i < how_many; ++i) {
+    (*random_reals)[i] /= total;
+  }
 }
 
 int main (int argc, char* argv[]) {
@@ -127,22 +118,10 @@ int main (int argc, char* argv[]) {
 
   std::cout << "Bootstrapping reads from " << n_refs << (n_refs > 1 ? " samples." : " sample.") << std::endl;
   std::vector<double> props(n_refs);
-  double prop = 1.0/(double)(n_refs);
-  for (size_t i = 0; i < props.size(); ++i) {
-    props[i] = prop;
-  }
+  DrawRandomProportions(4, &props);
 
   // Randomly assign the proportions to the input sequences
-  std::random_device rd;
-  std::mt19937 g(rd());
-  std::shuffle(props.begin(), props.end(), g);
-  if (props.size() > 1) {
-    std::cout << "Assigned proportions: (";
-    for (size_t i = 0; i < props.size() - 1; ++i) {
-      std::cout << props[i] << ", ";
-    }
-    std::cout << props.back() << ')' << std::endl;
-  }
+  std::shuffle(props.begin(), props.end(), RNG);
   
   // Write the proportions to a file
   std::string filename(argv[n_refs + 1]);

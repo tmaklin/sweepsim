@@ -117,9 +117,9 @@ int main (int argc, char* argv[]) {
   unsigned n_refs = argc - 3; // Number of samples to mix
 
   std::cout << "Bootstrapping reads from " << n_refs << (n_refs > 1 ? " samples." : " sample.") << std::endl;
-  std::vector<double> props(n_refs);
-  DrawRandomProportions(4, &props);
-
+  std::vector<double> props;
+  DrawRandomProportions(n_refs, &props);
+  
   // Randomly assign the proportions to the input sequences
   std::shuffle(props.begin(), props.end(), RNG);
   

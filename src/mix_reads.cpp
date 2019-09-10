@@ -9,6 +9,7 @@
 #include <iterator>
 
 #include "parse_arguments.hpp"
+#include "version.h"
 
 std::random_device RD;
 std::mt19937 RNG(RD());
@@ -115,7 +116,7 @@ void DrawRandomProportions(const int &how_many, std::vector<double> *random_real
 }
 
 int main (int argc, char* argv[]) {
-  std::cout << "sweepsim-v0.0.0" << '\n' << std::endl;
+  std::cout << "sweepsim-" << _BUILD_VERSION << '\n' << std::endl;
   Arguments args;
   try {
     ParseArguments(argc, argv, args);

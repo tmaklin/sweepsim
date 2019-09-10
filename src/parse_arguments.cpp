@@ -19,7 +19,10 @@ void PrintHelpMessage() {
 	    << "\t--random <randomizeProportions>\n"
 	    << "\tdraw and use random proportions for sampling.\n"
 	    << "\t--shuffle <shuffleProportions>\n"
-	    << "\tshuffle the proportions before assignign them to input files." << std::endl;
+	    << "\tshuffle the proportions before assignign them to input files.\n"
+	    << '\n'
+	    << "\t--help"
+	    << "\tprint this message." << std::endl;
 }
 
 char* GetCmdOption(char **begin, char **end, const std::string &option) {

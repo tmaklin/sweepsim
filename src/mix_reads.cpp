@@ -8,6 +8,8 @@
 #include <set>
 #include <iterator>
 
+#include "parse_arguments.hpp"
+
 std::random_device RD;
 std::mt19937 RNG(RD());
 
@@ -88,12 +90,12 @@ long unsigned CountLines(const std::string &infile) {
   return(lines_count);
 }
 
-void WriteMetadata(const std::vector<double> &proportions, std::string &filename, char* argv[]) {
+void WriteMetadata(const std::vector<double> &proportions, const std::vector<std::string> &infiles, std::string filename, char* argv[]) {
   filename += "_info.txt";
   std::ofstream meta(filename);
   meta << "#ref" << '\t' << "n_reads" << std::endl;
   for (size_t i = 0; i < proportions.size(); ++i) {
-    meta << argv[i + 1] << '\t' << proportions[i] << std::endl;
+    meta << infiles[i] << '\t' << proportions[i] << std::endl;
   }
   meta.close();
 }
@@ -113,26 +115,43 @@ void DrawRandomProportions(const int &how_many, std::vector<double> *random_real
 }
 
 int main (int argc, char* argv[]) {
-  // Fixed proportions for the input files.
-  unsigned n_refs = argc - 3; // Number of samples to mix
+  std::cout << "sweepsim-v0.0.0" << '\n' << std::endl;
+  Arguments args;
+  try {
+    ParseArguments(argc, argv, args);
+  } catch (std::runtime_error &e) {
+    std::cerr << "Error in parsing arguments:\n"
+	      << e.what()
+	      << "\nexiting" << std::endl;
+    return 0;
+  } catch (std::invalid_argument &e) {
+    std::cerr << e.what() << std::endl;
+    PrintHelpMessage();
+    return 0;
+  }
 
-  std::cout << "Bootstrapping reads from " << n_refs << (n_refs > 1 ? " samples." : " sample.") << std::endl;
-  std::vector<double> props;
-  DrawRandomProportions(n_refs, &props);
-  
-  // Randomly assign the proportions to the input sequences
-  std::shuffle(props.begin(), props.end(), RNG);
-  
-  // Write the proportions to a file
-  std::string filename(argv[n_refs + 1]);
-  WriteMetadata(props, filename, argv);
+  // Fixed proportions for the input files.
+  short unsigned n_refs = args.infiles.size(); // Number of samples to mix from
+
+  if (args.randomize) {
+    std::cout << "\tassigning random proportions to input files" << std::endl;
+    DrawRandomProportions(n_refs, &args.probs);
+  }
+  if (args.shuffle) {
+    std::cout << "\tshuffling proportions" << std::endl;
+    // Randomly assign the proportions to the input sequences
+    std::shuffle(args.probs.begin(), args.probs.end(), RNG);
+  }
+  std::cout << "\twriting assigned proportions to a file" << std::endl;
+  WriteMetadata(args.probs, args.infiles, args.outfile, argv);
 
   // Prepare the input reads.
+  std::cout << "Preparing the input files" << std::endl;
   std::ifstream references[n_refs][2];
   std::vector<long unsigned> read_counts(n_refs);
-  for (unsigned i = 0; i < n_refs; ++i) {
-    std::string strand1(argv[i + 1]);
-    std::string strand2(argv[i + 1]);
+  for (size_t i = 0; i < n_refs; ++i) {
+    std::string strand1(args.infiles[i]);
+    std::string strand2(args.infiles[i]);
     strand1 += "_1.fastq";
     strand2 += "_2.fastq";
     read_counts[i] = CountLines(strand1);
@@ -141,13 +160,16 @@ int main (int argc, char* argv[]) {
   }
 
   // Open the outfiles.
-  std::string of1(argv[n_refs + 1]);
-  std::string of2(argv[n_refs + 1]);
+  std::cout << "Preparing the output files" << std::endl;
+  std::string of1(args.outfile);
+  std::string of2(args.outfile);
   of1 += "_1.fastq";
   of2 += "_2.fastq";
   std::ofstream outfile_1(of1);
   std::ofstream outfile_2(of2);
-  long unsigned total_reads = std::atoi(argv[argc - 1]);
-  MixReads2(references, props, read_counts, total_reads, outfile_1, outfile_2);
+
+  std::cout << "Bootstrapping " << args.total_reads << " reads from " << n_refs << " input samples" << std::endl;
+  MixReads2(references, args.probs, read_counts, args.total_reads, outfile_1, outfile_2);
+
   return(0);
 }

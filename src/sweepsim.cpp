@@ -10,11 +10,39 @@
 
 #include "parse_arguments.hpp"
 #include "version.h"
+#include "gzstream.h"
 
 std::random_device RD;
 std::mt19937 RNG(RD());
 
 void SampleReads(std::ifstream &strand, const long unsigned &proportion, std::ofstream &outfile, std::vector<long unsigned> read_ids) {
+  // Sample reads from a sequence and write to out
+  std::string line;
+  long unsigned line_nr = 0;
+  long unsigned reads_found = 0;
+
+  while (getline(strand, line) && reads_found < proportion) {
+    ++line_nr;
+    if (read_ids.back() == line_nr) {
+      ++reads_found;
+      read_ids.pop_back();
+      std::string read = line;
+      for (unsigned j = 0; j < 3; ++j) {
+	getline(strand, line);
+	line_nr++;
+	read += '\n';
+	read +=line;
+      }
+      outfile << read << '\n';
+      while (read_ids.back() == line_nr - 3) {
+	outfile << read << '\n';
+	read_ids.pop_back();
+      }
+    }
+  }
+}
+
+void SampleReads(igzstream &strand, const long unsigned &proportion, ogzstream &outfile, std::vector<long unsigned> read_ids) {
   // Sample reads from a sequence and write to out
   std::string line;
   long unsigned line_nr = 0;
@@ -84,8 +112,44 @@ void MixReads2(std::ifstream infiles[][2], const std::vector<double> &props, con
   }
 }
 
+void MixReads2(igzstream infiles[][2], const std::vector<double> &props, const std::vector<long unsigned> read_counts, const long unsigned &n_reads, ogzstream &outfile_1, ogzstream &outfile_2) {
+  // Find how many reads we want from each sequences
+  std::vector<long unsigned> proportions(props.size());
+  long unsigned total_reads = 0;
+
+  for (size_t i = 0; i < props.size(); ++i) {
+    proportions[i] = std::ceil(props[i]*n_reads);
+    total_reads += proportions[i];
+  }
+
+  // Randomly draw reads from all input samples ***WITH REPLACEMENT***
+  // according to the proportions.
+  std::vector<std::vector<long unsigned> > read_ids(props.size());
+  DrawReadIds(proportions, read_counts, &read_ids);
+
+  // Process the strands
+  for (size_t i = 0; i < props.size(); ++i) {
+    if (proportions[i] > 0) {
+      const std::vector<long unsigned> &read_id = read_ids[i];
+      const long unsigned &prop = proportions[i];
+
+      igzstream &strand_1 = infiles[i][0];
+      SampleReads(strand_1, prop, outfile_1, read_id);
+
+      igzstream &strand_2 = infiles[i][1];
+      SampleReads(strand_2, prop, outfile_2, read_id);
+    }
+  }
+}
+
 long unsigned CountLines(const std::string &infile) {
   std::ifstream fromfile(infile);
+  long unsigned lines_count = std::count(std::istreambuf_iterator<char>(fromfile), std::istreambuf_iterator<char>(), '\n');
+  lines_count /= 4;
+  return(lines_count);
+}
+
+long unsigned CountLines(std::istream &fromfile) {
   long unsigned lines_count = std::count(std::istreambuf_iterator<char>(fromfile), std::istreambuf_iterator<char>(), '\n');
   lines_count /= 4;
   return(lines_count);
@@ -146,31 +210,58 @@ int main (int argc, char* argv[]) {
   std::cout << "\twriting assigned proportions to a file" << std::endl;
   WriteMetadata(args.probs, args.infiles, args.outfile, argv);
 
-  // Prepare the input reads.
-  std::cout << "Preparing the input files" << std::endl;
-  std::ifstream references[n_refs][2];
-  std::vector<long unsigned> read_counts(n_refs);
-  for (size_t i = 0; i < n_refs; ++i) {
-    std::string strand1(args.infiles[i]);
-    std::string strand2(args.infiles[i]);
-    strand1 += "_1.fastq";
-    strand2 += "_2.fastq";
-    read_counts[i] = CountLines(strand1);
-    references[i][0].open(strand1);
-    references[i][1].open(strand2);
-  }
-
   // Open the outfiles.
   std::cout << "Preparing the output files" << std::endl;
   std::string of1(args.outfile);
   std::string of2(args.outfile);
   of1 += "_1.fastq";
   of2 += "_2.fastq";
-  std::ofstream outfile_1(of1);
-  std::ofstream outfile_2(of2);
+  
+  // Prepare the input reads.
+  std::cout << "Preparing the input files" << std::endl;
+  if (!args.compressed) {
+    std::ifstream references[n_refs][2];
+    std::vector<long unsigned> read_counts(n_refs);
+    for (size_t i = 0; i < n_refs; ++i) {
+      std::string strand1(args.infiles[i]);
+      std::string strand2(args.infiles[i]);
+      strand1 += "_1.fastq";
+      strand2 += "_2.fastq";
+      //      read_counts[i] = CountLines(strand1);
+      references[i][0].open(strand1);
+      read_counts[i] = CountLines(references[i][0]);
+      references[i][0].close();
+      references[i][0].clear();
+      references[i][0].open(strand1);
+      references[i][1].open(strand2);
+    }
+    std::ofstream outfile_1(of1);
+    std::ofstream outfile_2(of2);
 
-  std::cout << "Bootstrapping " << args.total_reads << " reads from " << n_refs << " input samples" << std::endl;
-  MixReads2(references, args.probs, read_counts, args.total_reads, outfile_1, outfile_2);
+    std::cout << "Bootstrapping " << args.total_reads << " reads from " << n_refs << " input samples" << std::endl;
+    MixReads2(references, args.probs, read_counts, args.total_reads, outfile_1, outfile_2);
+  } else {
+    igzstream references[n_refs][2];
+    std::vector<long unsigned> read_counts(n_refs);
+    for (size_t i = 0; i < n_refs; ++i) {
+      std::string strand1(args.infiles[i]);
+      std::string strand2(args.infiles[i]);
+      strand1 += "_1.fastq.gz";
+      strand2 += "_2.fastq.gz";
+      //      read_counts[i] = CountLines(strand1);
+      references[i][0].open(strand1.c_str());
+      read_counts[i] = CountLines(references[i][0]);
+      references[i][0].close();
+      references[i][0].clear();
+      references[i][0].open(strand1.c_str());
+      references[i][1].open(strand2.c_str());
+    }
+    ogzstream outfile_1(std::string(of1 + ".gz").c_str());
+    ogzstream outfile_2(std::string(of2 + ".gz").c_str());
+
+    std::cout << "Bootstrapping " << args.total_reads << " reads from " << n_refs << " input samples" << std::endl;
+    MixReads2(references, args.probs, read_counts, args.total_reads, outfile_1, outfile_2);
+  }
 
   return(0);
 }

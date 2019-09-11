@@ -20,6 +20,8 @@ void PrintHelpMessage() {
 	    << "\tdraw and use random proportions for sampling.\n"
 	    << "\t--shuffle <shuffleProportions>\n"
 	    << "\tshuffle the proportions before assignign them to input files.\n"
+	    << "\t--compressed <compressedInput>\n"
+	    << "\tRead from input files compressed with gzip (.gz).\n"
 	    << '\n'
 	    << "\t--help"
 	    << "\tprint this message." << std::endl;
@@ -77,6 +79,7 @@ void ParseArguments(int argc, char *argv[], Arguments &args) {
 
   args.randomize = CmdOptionPresent(argv, argv+argc, "--random");
   args.shuffle = CmdOptionPresent(argv, argv+argc, "--shuffle");
+  args.compressed = CmdOptionPresent(argv, argv+argc, "--compressed");
 
   if (CmdOptionPresent(argv, argv+argc, "-o")) {
     args.outfile = std::string(GetCmdOption(argv, argv+argc, "-o"));

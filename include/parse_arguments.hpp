@@ -14,6 +14,7 @@ struct Arguments {
   bool randomize = false;
   bool shuffle = false;
   bool compressed = false;
+  bool gzip = false;
 };
 
 void ParseArguments(int argc, char *argv[], Arguments &args);

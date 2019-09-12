@@ -22,6 +22,8 @@ void PrintHelpMessage() {
 	    << "\tshuffle the proportions before assignign them to input files.\n"
 	    << "\t--compressed <compressedInput>\n"
 	    << "\tRead from input files compressed with gzip (.gz).\n"
+	    << "\t--gzip <gzipOutput>\n"
+	    << "\tWrite the output in compressed format (.gz).\n"
 	    << '\n'
 	    << "\t--help"
 	    << "\tprint this message." << std::endl;
@@ -80,6 +82,7 @@ void ParseArguments(int argc, char *argv[], Arguments &args) {
   args.randomize = CmdOptionPresent(argv, argv+argc, "--random");
   args.shuffle = CmdOptionPresent(argv, argv+argc, "--shuffle");
   args.compressed = CmdOptionPresent(argv, argv+argc, "--compressed");
+  args.gzip = CmdOptionPresent(argv, argv+argc, "--gzip");
 
   if (CmdOptionPresent(argv, argv+argc, "-o")) {
     args.outfile = std::string(GetCmdOption(argv, argv+argc, "-o"));

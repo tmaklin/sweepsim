@@ -48,7 +48,7 @@ Bootstrap 100 reads from a single sequencing sample with random proportions
 
 # Output
 The output will contain three files:
-	```
+```
 mixture-reads_1.fastq // Reads sampled from the 1st strand
 mixture-reads_2.fastq // Reads sampled from the 2nd strand
 mixture-reads_info.txt // Info about the input files and their sampling proportions

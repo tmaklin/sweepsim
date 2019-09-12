@@ -61,7 +61,7 @@ void MixReads2(std::ifstream infiles[][2], const std::vector<double> &props, con
   }
 }
 
-void MixReads2(igzstream infiles[][2], const std::vector<double> &props, const std::vector<long unsigned> read_counts, const long unsigned &n_reads, ogzstream &outfile_1, ogzstream &outfile_2) {
+void MixReads2(zstr::ifstream infiles[][2], const std::vector<double> &props, const std::vector<long unsigned> read_counts, const long unsigned &n_reads, zstr::ofstream &outfile_1, zstr::ofstream &outfile_2) {
   // Find how many reads we want from each sequences
   std::vector<long unsigned> proportions(props.size());
   long unsigned total_reads = 0;
@@ -82,11 +82,41 @@ void MixReads2(igzstream infiles[][2], const std::vector<double> &props, const s
       const std::vector<long unsigned> &read_id = read_ids[i];
       const long unsigned &prop = proportions[i];
 
-      igzstream &strand_1 = infiles[i][0];
+      zstr::ifstream &strand_1 = infiles[i][0];
       SampleReads(strand_1, prop, outfile_1, read_id);
 
-      igzstream &strand_2 = infiles[i][1];
+      zstr::ifstream &strand_2 = infiles[i][1];
       SampleReads(strand_2, prop, outfile_2, read_id);
+    }
+  }
+}
+
+void MixReads2(std::unique_ptr<std::istream> infiles[][2], const std::vector<double> &props, const std::vector<long unsigned> read_counts, const long unsigned &n_reads, zstr::ofstream &outfile_1, zstr::ofstream &outfile_2) {
+  // Find how many reads we want from each sequences
+  std::vector<long unsigned> proportions(props.size());
+  long unsigned total_reads = 0;
+
+  for (size_t i = 0; i < props.size(); ++i) {
+    proportions[i] = std::ceil(props[i]*n_reads);
+    total_reads += proportions[i];
+  }
+
+  // Randomly draw reads from all input samples ***WITH REPLACEMENT***
+  // according to the proportions.
+  std::vector<std::vector<long unsigned> > read_ids(props.size());
+  DrawReadIds(proportions, read_counts, &read_ids);
+
+  // Process the strands
+  for (size_t i = 0; i < props.size(); ++i) {
+    if (proportions[i] > 0) {
+      const std::vector<long unsigned> &read_id = read_ids[i];
+      const long unsigned &prop = proportions[i];
+
+      //      zstr::ifstream &strand_1 = infiles[i][0];
+      SampleReads(*infiles[i][0], prop, outfile_1, read_id);
+
+      //      zstr::ifstream &strand_2 = infiles[i][1];
+      SampleReads(*infiles[i][1], prop, outfile_2, read_id);
     }
   }
 }

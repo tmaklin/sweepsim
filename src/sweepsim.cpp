@@ -54,8 +54,8 @@ int main (int argc, char* argv[]) {
   for (size_t i = 0; i < n_refs; ++i) {
     std::string strand1(args.infiles[i]);
     std::string strand2(args.infiles[i]);
-    strand1 += (args.compressed ? "_1.fastq.gz": "_1.fastq");
-    strand2 += (args.compressed ? "_2.fastq.gz": "_2.fastq");
+    strand1 += (args.gzip ? "_1.fastq.gz": "_1.fastq");
+    strand2 += (args.gzip ? "_2.fastq.gz": "_2.fastq");
     references[i][0] = std::unique_ptr<std::istream>(new zstr::ifstream(strand1));
     read_counts[i] = CountLines<long unsigned>(*references[i][0]);
     std::cout << read_counts[i] << std::endl;
@@ -69,10 +69,10 @@ int main (int argc, char* argv[]) {
   std::cout << "Preparing the output files" << std::endl;
   std::string of1(args.outfile);
   std::string of2(args.outfile);
-  of1 += (args.gzip ? "_1.fastq.gz": "_1.fastq");
-  of2 += (args.gzip ? "_2.fastq.gz": "_2.fastq");
+  of1 += (args.compress ? "_1.fastq.gz": "_1.fastq");
+  of2 += (args.compress ? "_2.fastq.gz": "_2.fastq");
   
-  if (args.gzip) {
+  if (args.compress) {
     outfiles[0] = std::unique_ptr<std::ostream>(new zstr::ofstream(of1));
     outfiles[1] = std::unique_ptr<std::ostream>(new zstr::ofstream(of2));
   } else {

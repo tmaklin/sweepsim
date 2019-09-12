@@ -13,7 +13,7 @@ struct Arguments {
 
   bool randomize = false;
   bool shuffle = false;
-  bool compressed = false;
+  bool compress = false;
   bool gzip = false;
 };
 

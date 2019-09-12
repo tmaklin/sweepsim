@@ -20,9 +20,9 @@ void PrintHelpMessage() {
 	    << "\tdraw and use random proportions for sampling.\n"
 	    << "\t--shuffle <shuffleProportions>\n"
 	    << "\tshuffle the proportions before assignign them to input files.\n"
-	    << "\t--compressed <compressedInput>\n"
+	    << "\t--gzip <gzippedInput>\n"
 	    << "\tRead from input files compressed with gzip (.gz).\n"
-	    << "\t--gzip <gzipOutput>\n"
+	    << "\t--compress <compressOutput>\n"
 	    << "\tWrite the output in compressed format (.gz).\n"
 	    << '\n'
 	    << "\t--help"
@@ -81,7 +81,7 @@ void ParseArguments(int argc, char *argv[], Arguments &args) {
 
   args.randomize = CmdOptionPresent(argv, argv+argc, "--random");
   args.shuffle = CmdOptionPresent(argv, argv+argc, "--shuffle");
-  args.compressed = CmdOptionPresent(argv, argv+argc, "--compressed");
+  args.compress = CmdOptionPresent(argv, argv+argc, "--compress");
   args.gzip = CmdOptionPresent(argv, argv+argc, "--gzip");
 
   if (CmdOptionPresent(argv, argv+argc, "-o")) {

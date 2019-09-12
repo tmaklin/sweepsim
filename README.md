@@ -70,6 +70,10 @@ sweepsim recognizes the following flags:
 	draw and use random proportions for sampling.
 	--shuffle <shuffleProportions>
 	shuffle the proportions before assignign them to input files.
+    --gzip <gzippedInput>
+	Read from input files compressed with gzip (.gz).
+	--compress <compressOutput>
+	Write the output in compressed format (.gz).
 	--compressed <compressedInput>
 	Read from input files compressed with gzip (.gz).
 	--gzip <gzipOutput>

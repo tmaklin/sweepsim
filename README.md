@@ -24,7 +24,8 @@ following format:
 sample-1_1.fastq
 sample-1_2.fastq
 ```
-i.e. the strands are in separate files and uncompressed.
+i.e. the strands are in separate files. The files may be either
+uncompressed, or compressed with gzip (.gz format)
 
 # Usage
 Bootstrap 100 reads from a single sequencing sample with random proportions
@@ -38,6 +39,12 @@ Bootstrap 100 reads from a single sequencing sample with random proportions
 
 ... with preset proportions, but assigned to random inputs
 > sweepsim -f sample-1,sample-2 --probs 0.20,0.80 -o mixture-reads -n 100 --shuffle
+
+... from gzipped (.gz) input files
+> sweepsim -f sample-1,sample-2 --probs 0.20,0.80 -o mixture-reads -n 100 --shuffle --compress
+
+... into gzipped (.gz) output files
+> sweepsim -f sample-1,sample-2 --probs 0.20,0.80 -o mixture-reads -n 100 --shuffle --compress --gzip
 
 # Output
 The output will contain three files:
@@ -63,6 +70,10 @@ sweepsim recognizes the following flags:
 	draw and use random proportions for sampling.
 	--shuffle <shuffleProportions>
 	shuffle the proportions before assignign them to input files.
+	--compressed <compressedInput>
+	Read from input files compressed with gzip (.gz).
+	--gzip <gzipOutput>
+	Write the output in compressed format (.gz).
 	
 	--help
 	print this message.

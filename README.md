@@ -58,23 +58,22 @@ mixture-reads_info.txt // Info about the input files and their sampling proporti
 sweepsim recognizes the following flags:
 
 ```
-	-o <outputFilePrefix>
-	Output file prefix.
-	-f <paired-endInputPrefix>
-	prefixes for the fastq-files to mix from.
-	-n <numReads>
-	how many reads to sample in total.
-	--props <proportions>
-	Use preset proportions rather (default: randomly drawn from uniform distribution and normalize).
-	--random <randomizeProportions>
-	draw and use random proportions for sampling.
-	--shuffle <shuffleProportions>
-	shuffle the proportions before assignign them to input files.
-    --gzip <gzippedInput>
-	Read from input files compressed with gzip (.gz).
-	--compress <compressOutput>
-	Write the output in compressed format (.gz).
-	
-	--help
-	print this message.
+-o <outputFilePrefix>
+Output file prefix.
+-f <paired-endInputPrefix>
+prefixes for the fastq-files to mix from.
+-n <numReads>
+how many reads to sample in total.
+--props <proportions>
+Use preset proportions rather (default: randomly drawn from uniform distribution and normalize).
+--random <randomizeProportions>
+draw and use random proportions for sampling.
+--shuffle <shuffleProportions>
+shuffle the proportions before assignign them to input files.
+--gzip <gzippedInput>
+Read from input files compressed with gzip (.gz).
+--compress <compressOutput>
+Write the output in compressed format (.gz).
+--help
+print help message.
 ```

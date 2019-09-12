@@ -46,59 +46,42 @@ int main (int argc, char* argv[]) {
   std::cout << "\twriting assigned proportions to a file" << std::endl;
   WriteMetadata<double>(args.probs, args.infiles, args.outfile, argv);
 
+  // Prepare the input reads.
+  std::cout << "Preparing the input files" << std::endl;
+  
+  std::unique_ptr<std::istream> references[n_refs][2];
+  std::vector<long unsigned> read_counts(n_refs);
+  for (size_t i = 0; i < n_refs; ++i) {
+    std::string strand1(args.infiles[i]);
+    std::string strand2(args.infiles[i]);
+    strand1 += (args.compressed ? "_1.fastq.gz": "_1.fastq");
+    strand2 += (args.compressed ? "_2.fastq.gz": "_2.fastq");
+    references[i][0] = std::unique_ptr<std::istream>(new zstr::ifstream(strand1));
+    read_counts[i] = CountLines<long unsigned>(*references[i][0]);
+    std::cout << read_counts[i] << std::endl;
+
+    references[i][0] = std::unique_ptr<std::istream>(new zstr::ifstream(strand1));
+    references[i][1] = std::unique_ptr<std::istream>(new zstr::ifstream(strand2));
+  }
+
+  std::unique_ptr<std::ostream> outfiles[2];
   // Open the outfiles.
   std::cout << "Preparing the output files" << std::endl;
   std::string of1(args.outfile);
   std::string of2(args.outfile);
-  of1 += "_1.fastq";
-  of2 += "_2.fastq";
+  of1 += (args.gzip ? "_1.fastq.gz": "_1.fastq");
+  of2 += (args.gzip ? "_2.fastq.gz": "_2.fastq");
   
-  // Prepare the input reads.
-  std::cout << "Preparing the input files" << std::endl;
-  if (!args.compressed) {
-    std::ifstream references[n_refs][2];
-    std::vector<long unsigned> read_counts(n_refs);
-    for (size_t i = 0; i < n_refs; ++i) {
-      std::string strand1(args.infiles[i]);
-      std::string strand2(args.infiles[i]);
-      strand1 += "_1.fastq";
-      strand2 += "_2.fastq";
-      //      read_counts[i] = CountLines(strand1);
-      references[i][0].open(strand1);
-      read_counts[i] = CountLines<long unsigned>(references[i][0]);
-      references[i][0].close();
-      references[i][0].clear();
-      references[i][0].open(strand1);
-      references[i][1].open(strand2);
-    }
-    std::ofstream outfile_1(of1);
-    std::ofstream outfile_2(of2);
-
-    std::cout << "Bootstrapping " << args.total_reads << " reads from " << n_refs << " input samples" << std::endl;
-    MixReads2(references, args.probs, read_counts, args.total_reads, outfile_1, outfile_2);
+  if (args.gzip) {
+    outfiles[0] = std::unique_ptr<std::ostream>(new zstr::ofstream(of1));
+    outfiles[1] = std::unique_ptr<std::ostream>(new zstr::ofstream(of2));
   } else {
-    //    igzstream references[n_refs][2];
-    std::unique_ptr<std::istream> references2[n_refs][2];
-    //    zstr::ifstream references[n_refs][2];
-    std::vector<long unsigned> read_counts(n_refs);
-    for (size_t i = 0; i < n_refs; ++i) {
-      std::string strand1(args.infiles[i]);
-      std::string strand2(args.infiles[i]);
-      strand1 += "_1.fastq.gz";
-      strand2 += "_2.fastq.gz";
-      references2[i][0] = std::unique_ptr<std::istream>(new zstr::ifstream(strand1));
-      read_counts[i] = CountLines<long unsigned>(*references2[i][0]);
-      std::cout << read_counts[i] << std::endl;
-
-      references2[i][0] = std::unique_ptr<std::istream>(new zstr::ifstream(strand1));
-      references2[i][1] = std::unique_ptr<std::istream>(new zstr::ifstream(strand2));
-    }
-    zstr::ofstream outfile_1(std::string(of1 + ".gz").c_str());
-    zstr::ofstream outfile_2(std::string(of2 + ".gz").c_str());
-
-    std::cout << "Bootstrapping " << args.total_reads << " reads from " << n_refs << " input samples" << std::endl;
-    MixReads2(references2, args.probs, read_counts, args.total_reads, outfile_1, outfile_2);
+    outfiles[0] = std::unique_ptr<std::ostream>(new std::ofstream(of1));
+    outfiles[1] = std::unique_ptr<std::ostream>(new std::ofstream(of2));
   }
+
+  std::cout << "Bootstrapping " << args.total_reads << " reads from " << n_refs << " input samples" << std::endl;
+  MixReads(references, args.probs, read_counts, args.total_reads, outfiles);
 
   return(0);
 }

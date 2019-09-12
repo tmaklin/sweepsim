@@ -41,14 +41,14 @@ Bootstrap 100 reads from a single sequencing sample with random proportions
 > sweepsim -f sample-1,sample-2 --probs 0.20,0.80 -o mixture-reads -n 100 --shuffle
 
 ... from gzipped (.gz) input files
-> sweepsim -f sample-1,sample-2 --probs 0.20,0.80 -o mixture-reads -n 100 --shuffle --compress
+> sweepsim -f sample-1,sample-2 --probs 0.20,0.80 -o mixture-reads -n 100 --shuffle --gzip
 
 ... into gzipped (.gz) output files
-> sweepsim -f sample-1,sample-2 --probs 0.20,0.80 -o mixture-reads -n 100 --shuffle --compress --gzip
+> sweepsim -f sample-1,sample-2 --probs 0.20,0.80 -o mixture-reads -n 100 --shuffle --gzip --compress
 
 # Output
 The output will contain three files:
-```
+	```
 mixture-reads_1.fastq // Reads sampled from the 1st strand
 mixture-reads_2.fastq // Reads sampled from the 2nd strand
 mixture-reads_info.txt // Info about the input files and their sampling proportions
@@ -73,10 +73,6 @@ sweepsim recognizes the following flags:
     --gzip <gzippedInput>
 	Read from input files compressed with gzip (.gz).
 	--compress <compressOutput>
-	Write the output in compressed format (.gz).
-	--compressed <compressedInput>
-	Read from input files compressed with gzip (.gz).
-	--gzip <gzipOutput>
 	Write the output in compressed format (.gz).
 	
 	--help

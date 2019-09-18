@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <set>
 #include <iterator>
+#include <memory>
 
 #include "parse_arguments.hpp"
 #include "mix_reads.hpp"

@@ -1,4 +1,5 @@
 #include <random>
+#include <algorithm>
 
 #include "sampling.hpp"
 

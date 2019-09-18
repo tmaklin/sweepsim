@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <vector>
+#include <memory>
 
 #include "zstr.hpp"
 

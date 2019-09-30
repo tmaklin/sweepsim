@@ -103,8 +103,8 @@ void ParseArguments(int argc, char *argv[], Arguments &args) {
     throw std::runtime_error("total number of reads to sample is missing");
   }
 
-  if (CmdOptionPresent(argv, argv+argc, "--probs") & !args.randomize) {
-    std::string probs(GetCmdOption(argv, argv+argc, "--probs"));
+  if (CmdOptionPresent(argv, argv+argc, "--props") & !args.randomize) {
+    std::string probs(GetCmdOption(argv, argv+argc, "--props"));
     std::vector<std::string> probs_str;
     SplitArguments(probs, &probs_str);
     args.probs = ValidateProbs(probs_str);

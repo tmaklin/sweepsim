@@ -16,7 +16,7 @@
 #include "zstr.hpp"
 
 int main (int argc, char* argv[]) {
-  std::cout << "sweepsim-" << _BUILD_VERSION << '\n' << std::endl;
+  std::cerr << "sweepsim-" << SWEEPSIM_BUILD_VERSION << '\n' << std::endl;
   Arguments args;
   try {
     ParseArguments(argc, argv, args);
@@ -35,19 +35,19 @@ int main (int argc, char* argv[]) {
   short unsigned n_refs = args.infiles.size(); // Number of samples to mix from
 
   if (args.randomize) {
-    std::cout << "\tassigning random proportions to input files" << std::endl;
+    std::cerr << "\tassigning random proportions to input files" << std::endl;
     DrawRandomProportions(n_refs, &args.probs);
   }
   if (args.shuffle) {
-    std::cout << "\tshuffling proportions" << std::endl;
+    std::cerr << "\tshuffling proportions" << std::endl;
     // Randomly assign the proportions to the input sequences
     Shuffle(args.probs);
   }
-  std::cout << "\twriting assigned proportions to a file" << std::endl;
+  std::cerr << "\twriting assigned proportions to a file" << std::endl;
   WriteMetadata<double>(args.probs, args.infiles, args.outfile, argv);
 
   // Prepare the input reads.
-  std::cout << "Preparing the input files" << std::endl;
+  std::cerr << "Preparing the input files" << std::endl;
   
   std::unique_ptr<std::istream> references[n_refs][2];
   std::vector<long unsigned> read_counts(n_refs);
@@ -58,7 +58,7 @@ int main (int argc, char* argv[]) {
     strand2 += (args.gzip ? "_2.fastq.gz": "_2.fastq");
     references[i][0] = std::unique_ptr<std::istream>(new zstr::ifstream(strand1));
     read_counts[i] = CountLines<long unsigned>(*references[i][0]);
-    std::cout << read_counts[i] << std::endl;
+    std::cerr << read_counts[i] << std::endl;
 
     references[i][0] = std::unique_ptr<std::istream>(new zstr::ifstream(strand1));
     references[i][1] = std::unique_ptr<std::istream>(new zstr::ifstream(strand2));
@@ -66,7 +66,7 @@ int main (int argc, char* argv[]) {
 
   std::unique_ptr<std::ostream> outfiles[2];
   // Open the outfiles.
-  std::cout << "Preparing the output files" << std::endl;
+  std::cerr << "Preparing the output files" << std::endl;
   std::string of1(args.outfile);
   std::string of2(args.outfile);
   of1 += (args.compress ? "_1.fastq.gz": "_1.fastq");
@@ -80,7 +80,7 @@ int main (int argc, char* argv[]) {
     outfiles[1] = std::unique_ptr<std::ostream>(new std::ofstream(of2));
   }
 
-  std::cout << "Bootstrapping " << args.total_reads << " reads from " << n_refs << " input samples" << std::endl;
+  std::cerr << "Bootstrapping " << args.total_reads << " reads from " << n_refs << " input samples" << std::endl;
   MixReads(references, args.probs, read_counts, args.total_reads, outfiles);
 
   return(0);

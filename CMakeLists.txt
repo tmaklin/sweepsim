@@ -15,16 +15,16 @@ if(GIT_FOUND)
   execute_process(
     COMMAND ${GIT_EXECUTABLE} describe --tags
     WORKING_DIRECTORY "${local_dir}"
-    OUTPUT_VARIABLE _BUILD_VERSION
+    OUTPUT_VARIABLE SWEEPSIM_BUILD_VERSION
     ERROR_QUIET
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
-  message( STATUS "sweepsim version: ${_BUILD_VERSION}")
+  message( STATUS "sweepsim version: ${SWEEPSIM_BUILD_VERSION}")
 else()
   message(STATUS "GIT not found, version numbering disabled")
-  set(_BUILD_VERSION "unknown")
+  set(SWEEPSIM_BUILD_VERSION "unknown")
 endif()
-string(TIMESTAMP _BUILD_TIMESTAMP)
+string(TIMESTAMP SWEEPSIM_BUILD_TIMESTAMP)
 
 ## Generate a version.h file containing build version and timestamp
 configure_file(include/version.h.in ${CMAKE_SOURCE_DIR}/include/version.h @ONLY)

@@ -5,7 +5,8 @@
 #include <vector>
 
 #include "zstr.hpp"
+#include "file.hpp"
 
-void MixReads(std::unique_ptr<std::istream> infiles[][2], const std::vector<double> &props, const std::vector<long unsigned> read_counts, const long unsigned &n_reads, std::unique_ptr<std::ostream> outfiles[2]);
+void MixReads(std::vector<File::In> infiles[2], const std::vector<double> &props, const std::vector<long unsigned> read_counts, const long unsigned &n_reads, std::pair<File::Out, File::Out> &outfiles);
 
 #endif

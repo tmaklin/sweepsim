@@ -1,14 +1,13 @@
 #include "parse_arguments.hpp"
 
 #include <algorithm>
-#include <iostream>
 #include <exception>
 #include <sstream>
 
 #include "file.hpp"
 
-void PrintHelpMessage() {
-  std::cerr << "Usage: mix_reads -o <outputFilePrefix> -f <paired-endInputPrefix> -n <numReads> [OPTIONS]\n"
+void PrintHelpMessage(File::Out &out) {
+  out << "Usage: mix_reads -o <outputFilePrefix> -f <paired-endInputPrefix> -n <numReads> [OPTIONS]\n"
 	    << "Mixes sequencing reads from multiple files together; randomly or according to some proportions..\n\n"
 	    << "Options:\n"
     	    << "\t-o <outputFilePrefix>\n"
@@ -29,7 +28,7 @@ void PrintHelpMessage() {
 	    << "\tWrite the output in compressed format (.gz).\n"
 	    << '\n'
 	    << "\t--help"
-	    << "\tprint this message." << std::endl;
+      << "\tprint this message." << '\n';
 }
 
 char* GetCmdOption(char **begin, char **end, const std::string &option) {
@@ -80,7 +79,6 @@ void ParseArguments(int argc, char *argv[], Arguments &args) {
   if (CmdOptionPresent(argv, argv+argc, "--help")) {
     throw std::invalid_argument("");
   }
-  std::cerr << "Parsing arguments" << std::endl;
 
   args.randomize = CmdOptionPresent(argv, argv+argc, "--random");
   args.shuffle = CmdOptionPresent(argv, argv+argc, "--shuffle");

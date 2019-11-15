@@ -19,11 +19,12 @@ int main (int argc, char* argv[]) {
   File::Out log(std::cerr);
   log << "sweepsim-" << SWEEPSIM_BUILD_VERSION << '\n' << '\n';
   Arguments args;
+  log << "Parsing arguments" << '\n';
   try {
     ParseArguments(argc, argv, args);
   } catch (std::invalid_argument &e) {
     log << e.what() << '\n';
-    PrintHelpMessage();
+    PrintHelpMessage(log);
     return 0;
   } catch (std::exception &e) {
     log << "Error in parsing arguments:\n\t"

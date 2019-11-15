@@ -24,6 +24,6 @@ struct Arguments {
 };
 
 void ParseArguments(int argc, char *argv[], Arguments &args);
-void PrintHelpMessage();
+void PrintHelpMessage(File::Out &out);
 
 #endif

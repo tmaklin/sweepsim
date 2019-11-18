@@ -3,11 +3,17 @@
 
 #include <vector>
 #include <string>
+#include <utility>
+
+#include "file.hpp"
 
 struct Arguments {
-  std::vector<std::string> infiles;
+  std::vector<std::string> infile;
+  std::vector<File::In> infiles[2];
   std::string outfile;
   std::vector<double> probs;
+  std::pair<File::Out, File::Out> outfiles;
+  File::Out meta_file;
 
   long unsigned total_reads;
 
@@ -18,6 +24,6 @@ struct Arguments {
 };
 
 void ParseArguments(int argc, char *argv[], Arguments &args);
-void PrintHelpMessage();
+void PrintHelpMessage(File::Out &out);
 
 #endif

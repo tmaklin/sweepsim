@@ -1,88 +1,101 @@
 #include <iostream>
 #include <fstream>
-#include <random>
 #include <vector>
-#include <algorithm>
 #include <string>
-#include <unistd.h>
-#include <set>
-#include <iterator>
-#include <memory>
 
-#include "parse_arguments.hpp"
+#include "zstr/src/zstr.hpp"
+#include "cxxargs/include/cxxargs.hpp"
+
+#include "version.h"
 #include "mix_reads.hpp"
 #include "sampling.hpp"
 #include "util.hpp"
-#include "version.h"
-#include "zstr.hpp"
+
+void parse_args(int argc, char* argv[], cxxargs::Arguments &args) {
+  args.add_long_argument<bool>("help", "Print the help message", false);
+  args.add_short_argument<std::string>('o', "outfile");
+  args.add_short_argument<std::vector<std::string>>('f', "Prefixes for the fastq-files to mix from.");
+  args.add_short_argument<uint32_t>('n', "How many reads to sample in total.");
+  args.add_long_argument<bool>("random", "Draw and use random proportions for sampling. (default: false)", false);
+  if (!args.value<bool>("random")) {
+    args.add_long_argument<std::vector<double>>("props", "Use preset proportions rather than randomly drawn.");
+  }
+  args.add_long_argument<bool>("shuffle", "Shuffle the proportions before assigning them to input files. (default: false)", false);
+  args.add_long_argument<bool>("gzip", "Read from input files compressed with gzip (.gz). (default: false)", false);
+  args.add_long_argument<bool>("compress", "Write the output in compressed format (.gz). (default: false)", false);
+
+  args.parse(argc, argv);
+}
 
 int main (int argc, char* argv[]) {
-  std::cout << "sweepsim-" << _BUILD_VERSION << '\n' << std::endl;
-  Arguments args;
+  File::Out log(std::cerr);
+  cxxargs::Arguments args("sweepsim-" + std::string(SWEEPSIM_BUILD_VERSION), "Usage: mix_reads -o <outputFilePrefix> -f <paired-endInputPrefix> -n <numReads> [OPTIONS]");
+  log << args.get_program_name() << '\n';
+  log << "Parsing arguments" << '\n';
+  std::vector<File::In> infiles[2];
+  std::pair<File::Out, File::Out> outfiles;
+  File::Out meta_file;
   try {
-    ParseArguments(argc, argv, args);
-  } catch (std::runtime_error &e) {
-    std::cerr << "Error in parsing arguments:\n"
+    parse_args(argc, argv, args);
+    if (args.value<bool>("help")) {
+      log << args.help() << '\n' << "exiting\n";
+      log.close();
+      return 0;
+    }
+    // Open the input and output files and throw errors if they're not accessible.
+    for (size_t i = 0; i < args.value<std::vector<std::string>>('f').size(); ++i) {
+      std::string name1 = args.value<std::vector<std::string>>('f').at(i) + (args.value<bool>("gzip") ? "_1.fastq.gz": "_1.fastq");
+      std::string name2 = args.value<std::vector<std::string>>('f').at(i) + (args.value<bool>("gzip") ? "_2.fastq.gz": "_2.fastq");
+      infiles[0].emplace_back(File::In());
+      infiles[1].emplace_back(File::In());
+      infiles[0].back().open(name1);
+      infiles[1].back().open(name2);
+    }
+    outfiles.first.open(args.value<std::string>('o') + (args.value<bool>("compress") ? "_1.fastq.gz": "_1.fastq"));
+    outfiles.second.open(args.value<std::string>('o')+ (args.value<bool>("compress") ? "_2.fastq.gz": "_2.fastq"));
+    meta_file.open(args.value<std::string>('o') + "_info.txt");
+  } catch (std::exception &e) {
+    log << "Error in parsing arguments:\n\t"
 	      << e.what()
-	      << "\nexiting" << std::endl;
-    return 0;
-  } catch (std::invalid_argument &e) {
-    std::cerr << e.what() << std::endl;
-    PrintHelpMessage();
+	      << "\nexiting" << '\n';
+    log.close();
     return 0;
   }
 
   // Fixed proportions for the input files.
-  short unsigned n_refs = args.infiles.size(); // Number of samples to mix from
+  short unsigned n_refs = args.value<std::vector<std::string>>('f').size();
 
-  if (args.randomize) {
-    std::cout << "\tassigning random proportions to input files" << std::endl;
-    DrawRandomProportions(n_refs, &args.probs);
+  if (args.value<bool>("random")) {
+    log << "\tassigning random proportions to input files" << '\n';
+    std::vector<double> probs;
+    DrawRandomProportions(n_refs, &probs);
+    args.set_val("props", probs);
   }
-  if (args.shuffle) {
-    std::cout << "\tshuffling proportions" << std::endl;
+  if (args.value<bool>("shuffle")) {
+    std::vector<double> probs = args.value<std::vector<double>>("props");
+    log << "\tshuffling proportions" << '\n';
     // Randomly assign the proportions to the input sequences
-    Shuffle(args.probs);
+    Shuffle(probs);
+    args.set_val("props", probs);
   }
-  std::cout << "\twriting assigned proportions to a file" << std::endl;
-  WriteMetadata<double>(args.probs, args.infiles, args.outfile, argv);
+  log << "\twriting assigned proportions to a file" << '\n';
+  WriteMetadata<double>(args.value<std::vector<double>>("props"),
+  			args.value<std::vector<std::string>>('f'),
+  			meta_file, argv);
 
   // Prepare the input reads.
-  std::cout << "Preparing the input files" << std::endl;
+  log << "Preparing the input files" << '\n';
   
-  std::unique_ptr<std::istream> references[n_refs][2];
   std::vector<long unsigned> read_counts(n_refs);
   for (size_t i = 0; i < n_refs; ++i) {
-    std::string strand1(args.infiles[i]);
-    std::string strand2(args.infiles[i]);
-    strand1 += (args.gzip ? "_1.fastq.gz": "_1.fastq");
-    strand2 += (args.gzip ? "_2.fastq.gz": "_2.fastq");
-    references[i][0] = std::unique_ptr<std::istream>(new zstr::ifstream(strand1));
-    read_counts[i] = CountLines<long unsigned>(*references[i][0]);
-    std::cout << read_counts[i] << std::endl;
-
-    references[i][0] = std::unique_ptr<std::istream>(new zstr::ifstream(strand1));
-    references[i][1] = std::unique_ptr<std::istream>(new zstr::ifstream(strand2));
+    read_counts[i] = CountLines<long unsigned>(infiles[0].at(i).stream());
+    infiles[0].at(i).rewind();
   }
-
-  std::unique_ptr<std::ostream> outfiles[2];
   // Open the outfiles.
-  std::cout << "Preparing the output files" << std::endl;
-  std::string of1(args.outfile);
-  std::string of2(args.outfile);
-  of1 += (args.compress ? "_1.fastq.gz": "_1.fastq");
-  of2 += (args.compress ? "_2.fastq.gz": "_2.fastq");
-  
-  if (args.compress) {
-    outfiles[0] = std::unique_ptr<std::ostream>(new zstr::ofstream(of1));
-    outfiles[1] = std::unique_ptr<std::ostream>(new zstr::ofstream(of2));
-  } else {
-    outfiles[0] = std::unique_ptr<std::ostream>(new std::ofstream(of1));
-    outfiles[1] = std::unique_ptr<std::ostream>(new std::ofstream(of2));
-  }
+  log << "Preparing the output files" << '\n';
 
-  std::cout << "Bootstrapping " << args.total_reads << " reads from " << n_refs << " input samples" << std::endl;
-  MixReads(references, args.probs, read_counts, args.total_reads, outfiles);
+  log << "Bootstrapping " << args.value<uint32_t>('n') << " reads from " << n_refs << " input samples" << '\n';
+  MixReads(infiles, args.value<std::vector<double>>("props"), read_counts, args.value<uint32_t>('n'), outfiles);
 
   return(0);
 }

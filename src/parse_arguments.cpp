@@ -1,11 +1,13 @@
-#include <algorithm>
-#include <iostream>
-#include <exception>
-#include <sstream>
 #include "parse_arguments.hpp"
 
-void PrintHelpMessage() {
-  std::cerr << "Usage: mix_reads -o <outputFilePrefix> -f <paired-endInputPrefix> -n <numReads> [OPTIONS]\n"
+#include <algorithm>
+#include <exception>
+#include <sstream>
+
+#include "file.hpp"
+
+void PrintHelpMessage(File::Out &out) {
+  out << "Usage: mix_reads -o <outputFilePrefix> -f <paired-endInputPrefix> -n <numReads> [OPTIONS]\n"
 	    << "Mixes sequencing reads from multiple files together; randomly or according to some proportions..\n\n"
 	    << "Options:\n"
     	    << "\t-o <outputFilePrefix>\n"
@@ -26,7 +28,7 @@ void PrintHelpMessage() {
 	    << "\tWrite the output in compressed format (.gz).\n"
 	    << '\n'
 	    << "\t--help"
-	    << "\tprint this message." << std::endl;
+      << "\tprint this message." << '\n';
 }
 
 char* GetCmdOption(char **begin, char **end, const std::string &option) {
@@ -77,7 +79,6 @@ void ParseArguments(int argc, char *argv[], Arguments &args) {
   if (CmdOptionPresent(argv, argv+argc, "--help")) {
     throw std::invalid_argument("");
   }
-  std::cerr << "Parsing arguments" << std::endl;
 
   args.randomize = CmdOptionPresent(argv, argv+argc, "--random");
   args.shuffle = CmdOptionPresent(argv, argv+argc, "--shuffle");
@@ -86,13 +87,24 @@ void ParseArguments(int argc, char *argv[], Arguments &args) {
 
   if (CmdOptionPresent(argv, argv+argc, "-o")) {
     args.outfile = std::string(GetCmdOption(argv, argv+argc, "-o"));
+    args.outfiles.first.open(args.outfile + (args.compress ? "_1.fastq.gz": "_1.fastq"));
+    args.outfiles.second.open(args.outfile + (args.compress ? "_2.fastq.gz": "_2.fastq"));
+    args.meta_file.open(args.outfile + "_info.txt");
   } else {
     throw std::runtime_error("outfile must be specified");
   }
 
   if (CmdOptionPresent(argv, argv+argc, "-f")) {
-    std::string infiles(GetCmdOption(argv, argv+argc, "-f"));
-    SplitArguments(infiles, &args.infiles);
+    std::string infile(GetCmdOption(argv, argv+argc, "-f"));
+    SplitArguments(infile, &args.infile);
+    for (size_t i = 0; i < args.infile.size(); ++i) {
+      std::string name1 = args.infile.at(i) + (args.gzip ? "_1.fastq.gz": "_1.fastq");
+      std::string name2 = args.infile.at(i) + (args.gzip ? "_2.fastq.gz": "_2.fastq");
+      args.infiles[0].emplace_back(File::In());
+      args.infiles[1].emplace_back(File::In());
+      args.infiles[0].back().open(name1);
+      args.infiles[1].back().open(name2);
+    }
   } else {
     throw std::runtime_error("no input reads");
   }
@@ -108,7 +120,7 @@ void ParseArguments(int argc, char *argv[], Arguments &args) {
     std::vector<std::string> probs_str;
     SplitArguments(probs, &probs_str);
     args.probs = ValidateProbs(probs_str);
-    if (args.probs.size() != args.infiles.size()) {
+    if (args.probs.size() != args.infiles[0].size()) {
       throw std::runtime_error("number of input files does not match number of input probabilities");
     }
   } else {

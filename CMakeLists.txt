@@ -29,7 +29,7 @@ string(TIMESTAMP SWEEPSIM_BUILD_TIMESTAMP)
 ## Generate a version.h file containing build version and timestamp
 configure_file(include/version.h.in ${CMAKE_SOURCE_DIR}/include/version.h @ONLY)
 
-include_directories(include)
+include_directories(include external)
 file(GLOB SOURCES "src/*.cpp")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 

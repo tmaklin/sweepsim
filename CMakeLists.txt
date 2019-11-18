@@ -1,6 +1,15 @@
 cmake_minimum_required (VERSION 2.8.12)
 project (sweepsim)
 
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+## Determine build type and set flags accordingly
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release) ## Build Release by default
+endif()
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wno-sign-compare -g")
+
 ## Set C++11 support depending on cmake version
 if (${CMAKE_MAJOR_VERSION} GREATER 2 AND ${CMAKE_MINOR_VERSION} GREATER 0)
   set (CMAKE_CXX_STANDARD 11)
@@ -27,16 +36,12 @@ endif()
 string(TIMESTAMP SWEEPSIM_BUILD_TIMESTAMP)
 
 ## Generate a version.h file containing build version and timestamp
-configure_file(include/version.h.in ${CMAKE_SOURCE_DIR}/include/version.h @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/include/version.h.in ${CMAKE_BINARY_DIR}/include/version.h @ONLY)
 
-include_directories(include external)
+include_directories(include external ${CMAKE_BINARY_DIR}/include)
 file(GLOB SOURCES "src/*.cpp")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_executable(sweepsim ${SOURCES})
 
 # Link libraries
 target_link_libraries(sweepsim z)
-
-# Configure compiler flags, release enables -O2 optimization.
-set(CMAKE_BUILD_TYPE Release)

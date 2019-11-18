@@ -12,6 +12,7 @@
 #include "util.hpp"
 
 void parse_args(int argc, char* argv[], cxxargs::Arguments &args) {
+  args.add_long_argument<bool>("help", "Print the help message", false);
   args.add_short_argument<std::string>('o', "outfile");
   args.add_short_argument<std::vector<std::string>>('f', "Prefixes for the fastq-files to mix from.");
   args.add_short_argument<uint32_t>('n', "How many reads to sample in total.");
@@ -22,7 +23,6 @@ void parse_args(int argc, char* argv[], cxxargs::Arguments &args) {
   args.add_long_argument<bool>("shuffle", "Shuffle the proportions before assigning them to input files. (default: false)", false);
   args.add_long_argument<bool>("gzip", "Read from input files compressed with gzip (.gz). (default: false)", false);
   args.add_long_argument<bool>("compress", "Write the output in compressed format (.gz). (default: false)", false);
-  args.add_long_argument<bool>("help", "Print the help message", false);
 
   args.parse(argc, argv);
 }

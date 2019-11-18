@@ -6,7 +6,7 @@
 #include <memory>
 #include <exception>
 
-#include "zstr.hpp"
+#include "zstr/src/zstr.hpp"
 
 namespace File {
   namespace exceptions {

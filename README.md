@@ -15,7 +15,7 @@ or randomized proportions.
 > cmake ..
 > make
 ```
-- You can remove the build directory afterwards.
+- This will create the sweepsim executable in the build/bin directory.
 
 # Input
 Input paired-end sample(s) must be in separate files and in the

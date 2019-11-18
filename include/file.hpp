@@ -25,7 +25,7 @@ namespace File {
   }
 
   class Out {
-    std::unique_ptr<std::ofstream> byname;
+    std::unique_ptr<std::ostream> byname;
     std::ostream os;
     std::string myfile;
   public:
@@ -42,6 +42,14 @@ namespace File {
       if (!os)
 	throw exceptions::file_not_writable(filename);
     }
+    void open_compressed(const std::string &filename) {
+      os.flush();
+      byname.reset(new zstr::ofstream(filename));
+      os.rdbuf(byname->rdbuf());
+      os.setstate(byname->rdstate());
+      if (!os)
+	throw exceptions::file_not_writable(filename);
+    }      
     void close() {
       os.flush();
       byname.reset();

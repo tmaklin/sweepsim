@@ -51,8 +51,13 @@ int main (int argc, char* argv[]) {
       infiles[0].back().open(name1);
       infiles[1].back().open(name2);
     }
-    outfiles.first.open(args.value<std::string>('o') + (args.value<bool>("compress") ? "_1.fastq.gz": "_1.fastq"));
-    outfiles.second.open(args.value<std::string>('o')+ (args.value<bool>("compress") ? "_2.fastq.gz": "_2.fastq"));
+    if (args.value<bool>("compress")) {
+      outfiles.first.open_compressed(args.value<std::string>('o') + "_1.fastq.gz");
+      outfiles.second.open_compressed(args.value<std::string>('o')+ "_2.fastq.gz");
+    } else {
+      outfiles.first.open(args.value<std::string>('o') + "_1.fastq");
+      outfiles.second.open(args.value<std::string>('o')+ "_2.fastq");
+    }
     meta_file.open(args.value<std::string>('o') + "_info.txt");
   } catch (std::exception &e) {
     log << "Error in parsing arguments:\n\t"

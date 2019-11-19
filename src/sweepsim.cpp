@@ -17,14 +17,16 @@ void parse_args(int argc, char* argv[], cxxargs::Arguments &args) {
   args.add_short_argument<std::vector<std::string>>('f', "Prefixes for the fastq-files to mix from.");
   args.add_short_argument<uint32_t>('n', "How many reads to sample in total.");
   args.add_long_argument<bool>("random", "Draw and use random proportions for sampling. (default: false)", false);
-  if (!args.value<bool>("random")) {
-    args.add_long_argument<std::vector<double>>("props", "Use preset proportions rather than randomly drawn.");
-  }
+  args.add_long_argument<std::vector<double>>("props", "Use preset proportions rather than randomly drawn.");
+  args.set_not_required("props");
   args.add_long_argument<bool>("shuffle", "Shuffle the proportions before assigning them to input files. (default: false)", false);
   args.add_long_argument<bool>("gzip", "Read from input files compressed with gzip (.gz). (default: false)", false);
   args.add_long_argument<bool>("compress", "Write the output in compressed format (.gz). (default: false)", false);
 
   args.parse(argc, argv);
+  if (args.is_initialized("props")) {
+    args.set_value_ext<bool>("random", false);
+  }
 }
 
 int main (int argc, char* argv[]) {

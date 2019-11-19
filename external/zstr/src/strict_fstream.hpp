@@ -27,7 +27,7 @@ static std::string strerror()
     {
         buff = "Unknown error";
     }
-#elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
+#elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE || defined(__APPLE__)
 // XSI-compliant strerror_r()
     if (strerror_r(errno, &buff[0], buff.size()) != 0)
     {
@@ -35,8 +35,8 @@ static std::string strerror()
     }
 #else
 // GNU-specific strerror_r()
-    int p = strerror_r(errno, &buff[0], buff.size());
-    std::string tmp(p, p);
+    auto p = strerror_r(errno, &buff[0], buff.size());
+    std::string tmp(p, std::strlen(p));
     std::swap(buff, tmp);
 #endif
     buff.resize(buff.find('\0'));

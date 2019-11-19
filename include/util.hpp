@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <fstream>
+#include <algorithm>
 
 #include "file.hpp"
 

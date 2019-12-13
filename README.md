@@ -4,7 +4,14 @@ bootstrapping from existing samples, either according to prespecified
 or randomized proportions.
 
 # Installation
-## Requirements
+Either use the precompiled binary
+* [Linux 64-bit binary](https://github.com/tmaklin/sweepsim/releases/download/v0.2.4b/sweepsim-v0.2.4b_linux_x86-64.tar.gz)
+* [macOS 64-bit binary](https://github.com/tmaklin/sweepsim/releases/download/v0.2.4b/sweepsim-v0.2.4b_macOS_x86-64.tar.gz)
+
+or follow the instructions for compiling sweepsim from source.
+
+## Compiling from source
+### Requirements
 - C++11 compliant compiler.
 - cmake
 

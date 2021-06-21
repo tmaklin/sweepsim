@@ -3,13 +3,13 @@
 #include <vector>
 #include <string>
 
-#include "zstr/src/zstr.hpp"
-#include "cxxargs/include/cxxargs.hpp"
-
 #include "version.h"
 #include "mix_reads.hpp"
 #include "sampling.hpp"
 #include "util.hpp"
+
+#include "bxzstr.hpp"
+#include "cxxargs.hpp"
 
 void parse_args(int argc, char* argv[], cxxargs::Arguments &args) {
   args.add_long_argument<bool>("help", "Print the help message", false);
@@ -25,7 +25,7 @@ void parse_args(int argc, char* argv[], cxxargs::Arguments &args) {
 
   args.parse(argc, argv);
   if (args.is_initialized("props")) {
-    args.set_value_ext<bool>("random", false);
+    args.set_val<bool>("random", false);
   }
 }
 

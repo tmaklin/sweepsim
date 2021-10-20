@@ -5,8 +5,8 @@
 #include <vector>
 #include <memory>
 
-#include "file.hpp"
+#include "cxxio.hpp"
 
-void MixReads(std::vector<File::In> infiles[2], const std::vector<double> &props, const std::vector<long unsigned> read_counts, const long unsigned &n_reads, std::pair<File::Out, File::Out> &outfiles);
+void MixReads(std::vector<cxxio::In> infiles[2], const std::vector<double> &props, const std::vector<long unsigned> read_counts, const long unsigned &n_reads, std::pair<cxxio::Out, cxxio::Out> &outfiles);
 
 #endif

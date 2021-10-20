@@ -4,7 +4,7 @@
 #include "mix_reads.hpp"
 #include "sampling.hpp"
 
-void SampleReads(std::istream &strand, const long unsigned &proportion, File::Out &outfile, std::vector<long unsigned> read_ids) {
+void SampleReads(std::istream &strand, const long unsigned &proportion, cxxio::Out &outfile, std::vector<long unsigned> read_ids) {
   // Sample reads from a sequence and write to out
   std::string line;
   long unsigned line_nr = 0;
@@ -31,7 +31,7 @@ void SampleReads(std::istream &strand, const long unsigned &proportion, File::Ou
   }
 }
 
-void MixReads(std::vector<File::In> infiles[2], const std::vector<double> &props, const std::vector<long unsigned> read_counts, const long unsigned &n_reads, std::pair<File::Out, File::Out> &outfiles) {
+void MixReads(std::vector<cxxio::In> infiles[2], const std::vector<double> &props, const std::vector<long unsigned> read_counts, const long unsigned &n_reads, std::pair<cxxio::Out, cxxio::Out> &outfiles) {
   // Find how many reads we want from each sequences
   std::vector<long unsigned> proportions(props.size());
   long unsigned total_reads = 0;

@@ -6,7 +6,6 @@
 #include "version.h"
 #include "mix_reads.hpp"
 #include "sampling.hpp"
-#include "util.hpp"
 
 #include "bxzstr.hpp"
 #include "cxxargs.hpp"
@@ -29,14 +28,22 @@ void parse_args(int argc, char* argv[], cxxargs::Arguments &args) {
   }
 }
 
+void WriteMetadata(const std::vector<double> &proportions, const std::vector<std::string> &infiles, std::ostream &out, char* argv[]) {
+  out << "#ref" << '\t' << "n_reads" << '\n';
+  for (size_t i = 0; i < proportions.size(); ++i) {
+    out << infiles[i] << '\t' << proportions[i] << '\n';
+  }
+  out.flush();
+}
+
 int main (int argc, char* argv[]) {
-  File::Out log(std::cerr);
+  cxxio::Out log(std::cerr);
   cxxargs::Arguments args("sweepsim-" + std::string(SWEEPSIM_BUILD_VERSION), "Usage: mix_reads -o <outputFilePrefix> -f <paired-endInputPrefix> -n <numReads> [OPTIONS]");
   log << args.get_program_name() << '\n';
   log << "Parsing arguments" << '\n';
-  std::vector<File::In> infiles[2];
-  std::pair<File::Out, File::Out> outfiles;
-  File::Out meta_file;
+  std::vector<cxxio::In> infiles[2];
+  std::pair<cxxio::Out, cxxio::Out> outfiles;
+  cxxio::Out meta_file;
   try {
     parse_args(argc, argv, args);
     if (args.value<bool>("help")) {
@@ -48,8 +55,8 @@ int main (int argc, char* argv[]) {
     for (size_t i = 0; i < args.value<std::vector<std::string>>('f').size(); ++i) {
       std::string name1 = args.value<std::vector<std::string>>('f').at(i) + (args.value<bool>("gzip") ? "_1.fastq.gz": "_1.fastq");
       std::string name2 = args.value<std::vector<std::string>>('f').at(i) + (args.value<bool>("gzip") ? "_2.fastq.gz": "_2.fastq");
-      infiles[0].emplace_back(File::In());
-      infiles[1].emplace_back(File::In());
+      infiles[0].emplace_back(cxxio::In());
+      infiles[1].emplace_back(cxxio::In());
       infiles[0].back().open(name1);
       infiles[1].back().open(name2);
     }
@@ -86,17 +93,17 @@ int main (int argc, char* argv[]) {
     args.set_val("props", probs);
   }
   log << "\twriting assigned proportions to a file" << '\n';
-  WriteMetadata<double>(args.value<std::vector<double>>("props"),
+  WriteMetadata(args.value<std::vector<double>>("props"),
   			args.value<std::vector<std::string>>('f'),
-  			meta_file, argv);
+  			meta_file.stream(), argv);
+  meta_file.close();
 
   // Prepare the input reads.
   log << "Preparing the input files" << '\n';
   
   std::vector<long unsigned> read_counts(n_refs);
   for (size_t i = 0; i < n_refs; ++i) {
-    read_counts[i] = CountLines<long unsigned>(infiles[0].at(i).stream());
-    infiles[0].at(i).rewind();
+    read_counts[i] = infiles[0].at(i).count_lines<uint32_t>();
   }
   // Open the outfiles.
   log << "Preparing the output files" << '\n';
